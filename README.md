@@ -210,12 +210,22 @@ end
 
 **Why do I get an error when querying a view-backed model with `find`, `last`, or `first`?**
 
+You may get an error like this when you try to use `find`, `last`, or `first`:
+
+```ActiveRecord::StatementInvalid: PG::SyntaxError: ERROR:  zero-length delimited identifier at or near """"```
+
 ActiveRecord's `find` method expects to query based on your model's primary key,
 but views do not have primary keys. Additionally, the `first` and `last` methods
 will produce queries that attempt to sort based on the primary key.
 
-You can get around these issues by setting the primary key column on your Rails
-model like so:
+You can get around these issues by adding a `ROW_NUMBER()` to your view definition like so:
+```sql
+SELECT
+  ROW_NUMBER() OVER(ORDER BY record.created_at) AS my_unique_identifier_field,
+  ...
+```
+
+and by setting the primary key column on your Rails model like so:
 
 ```ruby
 class People < ActiveRecord::Base
